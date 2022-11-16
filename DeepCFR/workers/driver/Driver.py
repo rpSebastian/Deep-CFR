@@ -1,8 +1,8 @@
 from DeepCFR.EvalAgentDeepCFR import EvalAgentDeepCFR
 from DeepCFR.workers.driver._HighLevelAlgo import HighLevelAlgo
 from PokerRL.rl.base_cls.workers.DriverBase import DriverBase
-
-
+from pathlib import Path
+import pandas as pd
 class Driver(DriverBase):
 
     def __init__(self, t_prof, eval_methods, n_iterations=None, iteration_to_import=None, name_to_import=None):
@@ -73,6 +73,10 @@ class Driver(DriverBase):
         self.algo.init()
 
         print("Starting Training...")
+
+        nodes = []
+        convs = []
+        iters = []
         for _iter_nr in range(10000000 if self.n_iterations is None else self.n_iterations):
             print("Iteration: ", self._cfr_iter)
 
@@ -88,7 +92,31 @@ class Driver(DriverBase):
             # """"""""""""""""
             # Evaluate. Sync & Lock, then train while evaluating on other workers
             self.evaluate()
-            print(self.algo._la_handles[0]._data_sampler._num_touch_nodes, self.eval_masters['br'][0].scores)
+            node = self.algo._la_handles[0]._data_sampler._num_touch_nodes
+            conv = self.eval_masters['br'][0].scores[0]
+            nodes.append(node)
+            convs.append(conv)
+            iters.append(_iter_nr)
+            print(_iter_nr, node, conv)
+            game_name = 'LeducPoker'
+            algo_name = 'DeepCFR2'
+            file = (
+                Path(__file__).parents[3]
+                / "models"
+                / game_name
+                / "{}_{}.csv".format(algo_name, game_name)
+            )
+            file.parent.mkdir(parents=True, exist_ok=True)
+            algo_df = pd.DataFrame(
+                data=dict(
+                    nodes_touched=nodes,
+                    conv=convs,
+                    iters=iters
+                )
+            )
+            algo_df["game_name"] = game_name
+            algo_df["algorithm_name"] = algo_name
+            algo_df.to_csv(file, index=False)
 
             # """"""""""""""""
             # Log
