@@ -108,7 +108,18 @@ class MultiOutcomeSampler(_SamplerBase):
                 self._env_wrapper.load_state_dict(start_state_dict)
                 self._env_wrapper.env.reshuffle_remaining_deck()
 
+            round_before = self._env_wrapper.env.current_round
             _obs, _rew_for_all, _done, _info = self._env_wrapper.step(a)
+            round_after = self._env_wrapper.env.current_round
+
+            if round_before != round_after:
+                assert not _done
+                # one player and one chacne
+                self._num_touch_nodes += 2
+            else:
+                # one player
+                self._num_touch_nodes += 1
+
             _cfv_traverser_a = _rew_for_all[traverser]
 
             # Recursion over sub-trees

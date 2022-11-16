@@ -10,6 +10,7 @@ class SamplerBase:
         self._adv_buffers = adv_buffers
         self._avrg_buffers = avrg_buffers
         self._env_wrapper = self._env_bldr.get_new_wrapper(is_evaluating=False)
+        self._num_touch_nodes = 0
 
     def _traverser_act(self, start_state_dict, traverser, trav_depth, plyrs_range_idxs, iteration_strats, cfr_iter):
         raise NotImplementedError
@@ -26,6 +27,8 @@ class SamplerBase:
             cfr_iter (int):                  current iteration of Deep CFR
         """
         self._env_wrapper.reset()
+        # two chance, one player
+        self._num_touch_nodes += 3
         self._recursive_traversal(start_state_dict=self._env_wrapper.state_dict(),
                                   traverser=traverser,
                                   trav_depth=0,
@@ -94,7 +97,17 @@ class SamplerBase:
         # Execute action from strat
         # """""""""""""""""""""""""
         a = torch.multinomial(a_probs.cpu(), num_samples=1).item()
+        round_before = self._env_wrapper.env.current_round
         _obs, _rew_for_all, _done, _info = self._env_wrapper.step(a)
+        round_after = self._env_wrapper.env.current_round
+
+        if round_before != round_after:
+            assert not _done
+            # one player and one chacne
+            self._num_touch_nodes += 2
+        else:
+            # one player
+            self._num_touch_nodes += 1
         _rew_traverser = _rew_for_all[traverser]
 
         # """""""""""""""""""""""""

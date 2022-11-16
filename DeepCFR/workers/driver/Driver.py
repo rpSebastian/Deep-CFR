@@ -88,6 +88,7 @@ class Driver(DriverBase):
             # """"""""""""""""
             # Evaluate. Sync & Lock, then train while evaluating on other workers
             self.evaluate()
+            print(self.algo._la_handles[0]._data_sampler._num_touch_nodes, self.eval_masters['br'][0].scores)
 
             # """"""""""""""""
             # Log
