@@ -98,7 +98,7 @@ class Driver(DriverBase):
             convs.append(conv)
             iters.append(_iter_nr)
             print(_iter_nr, node, conv)
-            game_name = 'LeducPoker'
+            game_name = self._t_prof.game_cls_str
             algo_name = 'DeepCFR2'
             file = (
                 Path(__file__).parents[3]
