@@ -101,6 +101,8 @@ class LearnerActor(WorkerBase):
                         for p in range(self._t_prof.n_seats)
                     ]
                 )
+    def get_nodes(self):
+        return self._data_sampler._num_touch_nodes
 
     def generate_data(self, traverser, cfr_iter):
         iteration_strats = [
