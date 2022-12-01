@@ -92,14 +92,16 @@ class Driver(DriverBase):
             # """"""""""""""""
             # Evaluate. Sync & Lock, then train while evaluating on other workers
             self.evaluate()
-            node = self.algo._la_handles[0]._data_sampler._num_touch_nodes
-            conv = self.eval_masters['br'][0].scores[0]
+            node = 0
+            for la in self.algo._la_handles:
+                node += self._ray.get(self._ray.remote(la.get_nodes))
+            conv = self._ray.get(self._ray.remote(self.eval_masters['br'][0].get_scores))[0]
             nodes.append(node)
             convs.append(conv)
             iters.append(_iter_nr)
             print(_iter_nr, node, conv)
             game_name = self._t_prof.game_cls_str
-            algo_name = 'DeepCFR2'
+            algo_name = 'DeepCFR_{}'.format(self.eval_masters["br"][1])
             file = (
                 Path(__file__).parents[3]
                 / "models"
@@ -121,8 +123,8 @@ class Driver(DriverBase):
             # """"""""""""""""
             # Log
             # """"""""""""""""
-            if self._cfr_iter % self._t_prof.log_export_freq == 0:
-                self.save_logs()
+            # if self._cfr_iter % self._t_prof.log_export_freq == 0:
+                # self.save_logs()
             self.periodically_export_eval_agent()
 
             # """"""""""""""""
